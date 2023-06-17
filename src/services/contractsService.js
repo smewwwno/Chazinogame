@@ -4,8 +4,6 @@ import CasinoAddress from "../backend/contractsData/Casino-address.json";
 import CoinFlipAbi from "../backend/contractsData/CoinFlipGame.json";
 import CoinFlipAddress from "../backend/contractsData/CoinFlipGame-address.json";
 
-
-
 let casino = null;
 let coinflip = null;
 
@@ -22,11 +20,11 @@ const loadContractsCoinFlip = async(signer) => {
 
 const tokenBalance = async(acc) =>{
     const balance = await casino.tokenBalance(acc);
-    return parseInt(balance._hex);
+    return parseInt(ethers.toQuantity(balance));
 }
 
 const buyTokens = async(tokenNum, price) =>{
-    await (await casino.compraTokens(tokenNum, {value: ethers.utils.parseEther(price.toString())})).wait();
+    await (await casino.compraTokens(tokenNum, {value: ethers.toQuantity(price.toString())})).wait();
 }
 
 const withdrawTokens = async(tokenNum) =>{
@@ -38,50 +36,44 @@ const playRoulette = async(start, end, tokensBet) =>{
     let result
     try{
         result = {
-            numberWon : parseInt(game.events[1].args[0]._hex),
+            numberWon : parseInt(ethers.toQuantity(game.events[1].args[0])),
             result: game.events[1].args[1],
-            tokensEarned: parseInt(game.events[1].args[2]._hex)
+            tokensEarned: parseInt(ethers.toQuantity(game.events[1].args[2]))
         }
     }catch(error){
         result = {
-            numberWon : parseInt(game.events[2].args[0]._hex),
+            numberWon : parseInt(ethers.toQuantity(game.events[2].args[0])),
             result: game.events[2].args[1],
-            tokensEarned: parseInt(game.events[2].args[2]._hex)
+            tokensEarned: parseInt(ethers.toQuantity(game.events[2].args[2]))
         }
     }
     return result
 }
 const tokenPrice = async() =>{
     const price = await casino.precioTokens(1)
-    return ethers.utils.formatEther(price._hex)
+    return ethers.formatEther(price)
 }
 
 const historial = async(account) =>{
     const historial = await casino.tuHistorial(account)
     let historialParsed = []
     historial.map((game) => (
-        historialParsed.push([game[2], parseInt(game[0]), parseInt(game[1])])
+        historialParsed.push([game[2], parseInt(ethers.toQuantity(game[0])), parseInt(ethers.toQuantity(game[1]))])
     ))
     return historialParsed
 }
 
 const playCoinFlip = async(coinSide, betAmount) => {
     console.log("playCoinFlip started with coinSide:", coinSide, "and betAmount:", betAmount);
-    console.log("betAmount:", betAmount);
-    console.log("betAmount type:", betAmount.type);
-    let weiAmount = ethers.BigNumber.from(betAmount); // Convert Ether to Wei
+    let weiAmount = BigInt(betAmount); // Convert Ether to Wei
     console.log("weiAmount:", weiAmount);
-    console.log("weiAmount type:", weiAmount._hex.type);
-    // let coinSideString = ethers.utils.parseEther((coinSide).toString()); // Convert Ether to Wei
-    // console.log("coinSideString:", coinSideString);
-    // console.log("coinSideString type:", coinSideString.type);
-    console.log("About to call coinflip.placeBet with coinSide:", coinSide, "and weiAmount:", weiAmount._hex);
-    const coingame = await (await coinflip.placeBet(coinSide, { value: weiAmount._hex })).wait(); // Place bet and wait for transaction confirmation
+    console.log("About to call coinflip.placeBet with coinSide:", coinSide, "and weiAmount:", weiAmount);
+    const coingame = await (await coinflip.placeBet(coinSide, { value: weiAmount })).wait(); // Place bet and wait for transaction confirmation
     console.log("coinflip.placeBet returned:", coingame);
     let RequestSentId
-    try{
+    try {
         RequestSentId = {
-            requestId : coingame.events[1].args[0],
+            requestId: coingame.events[1].args[0],
             numWords: coingame.events[1].args[1]
         }
     }catch(error){
@@ -94,12 +86,6 @@ const playCoinFlip = async(coinSide, betAmount) => {
     return RequestSentId
 }
 
-
-// const calculateResult = async( ) => {
-//    await (await coinflip.calculateResult(requestId)).wait(); // Calculate result and wait for transaction confirmation
-//}
-
-// export default {loadContracts, tokenBalance, buyTokens, tokenPrice, historial, playRoulette, withdrawTokens, loadContractsCoinFlip, playCoinFlip, calculateResult};
 const contractsService = {
     loadContracts,
     tokenBalance,
