@@ -22,7 +22,7 @@
     "cryptocurrency-icons": "^0.18.0",
     "dna-responsive-nav": "^1.1.0",
     "ethereum-waffle": "3.4.0",
-    "ethers": "5.5.4",
+    "ethers": "6.6.0",
     "hardhat": "2.8.4",
     "package.json": "^2.0.1",
     "react": "^18.2.0",

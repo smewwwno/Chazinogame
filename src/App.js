@@ -28,7 +28,7 @@ const App = () => {
   });
   const account = useSelector(({ account }) => {
     return (
-      account
+        account
     )
   })
 
@@ -37,22 +37,28 @@ const App = () => {
   });
 
   const web3Handler = async () => {
+    if (!window.ethereum) {
+      console.error('MetaMask is not installed');
+      return;
+    }
+
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     dispatch(loadAccounts(accounts[0]));
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = provider.getSigner();
 
     window.ethereum.on('chainChanged', (chainId) => {
       window.location.reload();
-    })
+    });
 
     window.ethereum.on('accountsChanged', async function (accounts) {
       dispatch(loadAccounts(accounts[0]));
       await web3Handler();
-    })
+    });
+
     await contractsService.loadContracts(signer);
     await contractsService.loadContractsCoinFlip(signer);
-  }
+  };
 
   const loadInfo = async () => {
     if (account !==""){
@@ -64,25 +70,25 @@ const App = () => {
 
   useEffect(() => {
     loadInfo()
-}, [account])
+  }, [account])
 
 
   return (
-    <Grid container rowSpacing={{ xs: 8, sm: 9 }} sx={{ width: 1, backgroundColor: '#222c31'}}>
-    <Grid item xs={12}>
-      <Header login={web3Handler} balance={balance} account={account}/>
-    </Grid>
-    <Grid item xs={12}>
-      <Routes>
-        <Route path="/Wallet" element={<Wallet/>} > 
-          <Route path="buyTokens" element={<BuyTokens account={account} price={price} />} />
-          <Route path="withdrawTokens" element={<WithdrawTokens balance={balance} account={account} price={price}/>} />
-        </Route>
-        <Route path="/games" element={<Games/>}/>
-        <Route path="/games/Roulette" element={<RouletteGame balance={balance} account={account} />} />
-        <Route path="/games/CoinFlip" element={<CoinFlipGame balance={balance} account={account} />} />
-      </Routes>
-      </Grid>
+      <Grid container rowSpacing={{ xs: 8, sm: 9 }} sx={{ width: 1, backgroundColor: '#222c31'}}>
+        <Grid item xs={12}>
+          <Header login={web3Handler} balance={balance} account={account}/>
+        </Grid>
+        <Grid item xs={12}>
+          <Routes>
+            <Route path="/Wallet" element={<Wallet/>} >
+              <Route path="buyTokens" element={<BuyTokens account={account} price={price} />} />
+              <Route path="withdrawTokens" element={<WithdrawTokens balance={balance} account={account} price={price}/>} />
+            </Route>
+            <Route path="/games" element={<Games/>}/>
+            <Route path="/games/Roulette" element={<RouletteGame balance={balance} account={account} />} />
+            <Route path="/games/CoinFlip" element={<CoinFlipGame balance={balance} account={account} />} />
+          </Routes>
+        </Grid>
       </Grid>
   );
 }
